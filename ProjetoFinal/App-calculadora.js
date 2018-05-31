@@ -202,25 +202,26 @@ export default class ProjetoFinal extends Component {
 						break;
 				}
 				numeros.splice(i,2,temp);
-				operadores.splice(i);
+				operadores.splice(i,1);
 				i--;
 			}
 			i++;
-		}while(i < numeros.length - 1);
+		}while(i < operadores.length);
 
 		i = 0;
-		while(i < numeros.length - 1){
-			
-			if( operadores[i] == "+" ){
-				temp = numeros[i] + numeros[i+1];
-			}else{
-				temp = numeros[i] - numeros[i+1];
+		while(i < operadores.length){
+			switch(operadores[i]){
+				case "+":
+					temp = numeros[i] + numeros[i+1];
+					break;
+				case "-":
+					temp = numeros[i] - numeros[i+1];
+					break;
 			}
 			numeros.splice(i,2,temp);
-			operadores.splice(i);
+			operadores.splice(i,1);
 		}
-		return numeros[0].toString();
-		
+		return numeros[0].toString();		
 	}
 
 	getResult(s){

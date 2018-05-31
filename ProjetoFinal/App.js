@@ -54,7 +54,7 @@ export default class ProjetoFinal extends Component {
 	constructor(props){
 		super(props);
 		this.state = {
-			teste:"", 
+			btnId:"", 
 			resultado:"0",
 			hasVirgula:false,
 			pilhaOperacoes:[],
@@ -70,7 +70,7 @@ export default class ProjetoFinal extends Component {
 
 	puloDoGato(){
 		let s = this.state;
-		let comando = s.teste;
+		let comando = s.btnId;
 
 		switch(comando){
 			case "%":
@@ -202,25 +202,26 @@ export default class ProjetoFinal extends Component {
 						break;
 				}
 				numeros.splice(i,2,temp);
-				operadores.splice(i);
+				operadores.splice(i,1);
 				i--;
 			}
 			i++;
-		}while(i < numeros.length - 1);
+		}while(i < operadores.length);
 
 		i = 0;
-		while(i < numeros.length - 1){
-			
-			if( operadores[i] == "+" ){
-				temp = numeros[i] + numeros[i+1];
-			}else{
-				temp = numeros[i] - numeros[i+1];
+		while(i < operadores.length){
+			switch(operadores[i]){
+				case "+":
+					temp = numeros[i] + numeros[i+1];
+					break;
+				case "-":
+					temp = numeros[i] - numeros[i+1];
+					break;
 			}
 			numeros.splice(i,2,temp);
-			operadores.splice(i);
+			operadores.splice(i,1);
 		}
-		return numeros[0].toString();
-		
+		return numeros[0].toString();		
 	}
 
 	getResult(s){
@@ -300,32 +301,32 @@ export default class ProjetoFinal extends Component {
 		    		<Text style={styles.resultado}>{this.state.resultado}</Text>
 		    	</View>
 		    	<View style={styles.linha}>
-		    		<Botao label="AC" onPress={ () => {this.state.teste="AC"; this.puloDoGato();} } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")} flex="2"/>
-		    		<Botao label="%" onPress={ () => {this.state.teste="%"; this.puloDoGato();} } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")}/>
-		    		<Botao label="÷" onPress={ () => {this.state.teste="÷"; this.puloDoGato();} } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")}/>
+		    		<Botao label="AC" onPress={ () => {this.state.btnId="AC"; this.puloDoGato();} } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")} flex="2"/>
+		    		<Botao label="%" onPress={ () => {this.state.btnId="%"; this.puloDoGato();} } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")}/>
+		    		<Botao label="÷" onPress={ () => {this.state.btnId="÷"; this.puloDoGato();} } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")}/>
 		    	</View>
 		    	<View style={styles.linha}>
-		    		<Botao label="9" onPress={ () => {this.state.teste="9"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
-		    		<Botao label="8" onPress={ () => {this.state.teste="8"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
-		    		<Botao label="7" onPress={ () => {this.state.teste="7"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
-		    		<Botao label="*" onPress={ () => {this.state.teste="*"; this.puloDoGato();} } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")}/>
+		    		<Botao label="9" onPress={ () => {this.state.btnId="9"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
+		    		<Botao label="8" onPress={ () => {this.state.btnId="8"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
+		    		<Botao label="7" onPress={ () => {this.state.btnId="7"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
+		    		<Botao label="*" onPress={ () => {this.state.btnId="*"; this.puloDoGato();} } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")}/>
 		    	</View>
 		    	<View style={styles.linha}>
-		    		<Botao label="6" onPress={ () => {this.state.teste="6"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
-		    		<Botao label="5" onPress={ () => {this.state.teste="5"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
-		    		<Botao label="4" onPress={ () => {this.state.teste="4"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
-		    		<Botao label="-" onPress={ () => {this.state.teste="-"; this.puloDoGato();} } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")}/>
+		    		<Botao label="6" onPress={ () => {this.state.btnId="6"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
+		    		<Botao label="5" onPress={ () => {this.state.btnId="5"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
+		    		<Botao label="4" onPress={ () => {this.state.btnId="4"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
+		    		<Botao label="-" onPress={ () => {this.state.btnId="-"; this.puloDoGato();} } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")}/>
 		    	</View>
 		    	<View style={styles.linha}>
-		    		<Botao label="3" onPress={ () => {this.state.teste="3"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
-		    		<Botao label="2" onPress={ () => {this.state.teste="2"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
-		    		<Botao label="1" onPress={ () => {this.state.teste="1"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
-		    		<Botao label="+" onPress={ () => {this.state.teste="+"; this.puloDoGato();} } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")}/>
+		    		<Botao label="3" onPress={ () => {this.state.btnId="3"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
+		    		<Botao label="2" onPress={ () => {this.state.btnId="2"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
+		    		<Botao label="1" onPress={ () => {this.state.btnId="1"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
+		    		<Botao label="+" onPress={ () => {this.state.btnId="+"; this.puloDoGato();} } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")}/>
 		    	</View>
 		    	<View style={styles.linha}>
-		    		<Botao label="0" onPress={ () => {this.state.teste="0"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")} flex="2"/>
-		    		<Botao label="." onPress={ () => {this.state.teste="."; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
-		    		<Botao label="=" onPress={ () => {this.state.teste="="; this.puloDoGato();} } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")}/>
+		    		<Botao label="0" onPress={ () => {this.state.btnId="0"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")} flex="2"/>
+		    		<Botao label="." onPress={ () => {this.state.btnId="."; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
+		    		<Botao label="=" onPress={ () => {this.state.btnId="="; this.puloDoGato();} } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")}/>
 		    	</View>
 		    	<View style={styles.history}>
 		    		<Text style={styles.historyInfo}>{this.state.historyInfo}</Text>

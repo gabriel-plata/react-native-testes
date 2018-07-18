@@ -3,10 +3,38 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-na
 
 /*
 Todo:
-1.Colocar limites dos números
-2.Ajustar histórico para não ultrapassar limite disponível
+1.Mudar historyView e visorView para FlatList (ajustar fonte para não cortar números)
+2.Ajustar historyView para não cortar números ao chegar no limite da View
 3.Integrar historyApp com bd
+4.Pegar usuário e trocar por "Gabriel Plata" ao criar History e popular historyApp -> TODO - Task: 4
+5.Add menu para ver historyApp e outras funcionalidades
 */
+
+class History {
+
+	constructor(pilhaNumeros,pilhaOperacoes,resultado,date,user){
+		this.pilhaNumeros = pilhaNumeros;
+		this.pilhaOperacoes = pilhaOperacoes;
+		this.resultado = resultado;
+		this.date = date;
+		this.user = user;
+	}
+
+	getHistory(){
+		let history = "";
+		let i = 0;
+
+		history = "Usuário: " + user + "\n" + "Data: " + date + "\n"; 
+		do{
+			history += this.pilhaNumeros[i] + " " + this.pilhaOperacoes[i] + " " + this.pilhaNumeros[i+1] + " ";
+			i++;
+		}while(i < this.pilhaOperacoes.length);
+
+		history += "= " + this.resultado;
+
+		return history;
+	}
+}
 
 class Botao extends Component {
 	
@@ -53,14 +81,13 @@ export default class ProjetoFinal extends Component {
 
 	constructor(props){
 		super(props);
-		this.state = {
-			teste:"", 
+		this.state = { 
 			resultado:"0",
 			hasVirgula:false,
 			pilhaOperacoes:[],
 			pilhaNumeros:[],
-			historyPilhaNumeros:[],
-			historyPilhaOperacoes:[],
+			hasNegativeSignal:[],
+			negativeSignalApplied:false,
 			historyInfo:null,
 			historyApp:[] //depois que aprender conexão com bd puxar do banco ao iniciar app e ao fechar fazer upload do historyApp
 		};
@@ -68,9 +95,8 @@ export default class ProjetoFinal extends Component {
 		this.puloDoGato = this.puloDoGato.bind(this);
 	}
 
-	puloDoGato(){
+	puloDoGato(comando){
 		let s = this.state;
-		let comando = s.teste;
 
 		switch(comando){
 			case "%":
@@ -81,7 +107,7 @@ export default class ProjetoFinal extends Component {
 				s = this.operar(comando,s);
 				break;
 			case "AC":
-				s = this.zerar(s);
+				s = this.restartState(s,true);
 				break;
 			case "9":
 			case "8":
@@ -109,73 +135,135 @@ export default class ProjetoFinal extends Component {
 
 	}
 
-	zerar(s){
+	restartState(s,ac){
 
-		s.resultado = "0";
-		s.hasVirgula = false;
+		if( ac ){
+			s.resultado = "0";
+		}
+
+		if( parseFloat(s.resultado) - parseInt(s.resultado) != 0 ){
+			s.hasVirgula = true;
+		}else{
+			s.hasVirgula = false;
+		}
+
 		s.pilhaOperacoes = [];
 		s.pilhaNumeros = [];
-		s.historyPilhaNumeros = [];
-		s.historyPilhaOperacoes = [];
+		s.hasNegativeSignal = [];
+		s.negativeSignalApplied = false;
 		s.historyInfo = null;
+		
 		return s;
 	}
 
 	operar(operador,s){
 		let num;
+		let	temp;
+		let indexNum = s.pilhaNumeros.length - 1;
+		let	lastCharResultado = s.resultado.charAt(s.resultado.length - 1);
 
-		if(s.resultado.charAt(s.resultado.length - 1) != "." && s.resultado.length > s.resultado.indexOf(".") ){
-			if(s.hasVirgula){
+		if( indexNum > -1 ){
+			if( !s.hasNegativeSignal[indexNum] ){
 				num	= parseFloat(s.resultado);
 			}else{
-				num = parseInt(s.resultado);
+				temp = s.resultado;
+				temp.substr(3);
+				num	= parseFloat(temp) * -1;
+			}
+		}else{
+			if( s.hasNegativeSignal.length > 0 ){
+				temp = s.resultado;
+				temp.substr(3);
+				num = parseFloat(temp) * -1;
+			}else{
+				num	= parseFloat(s.resultado);
 			}
 		}
-
-		if((num != 0 && num != -0) && s.resultado.charAt(s.resultado.length - 1).localeCompare(".") != 0 ){
-			s.pilhaNumeros.push(num);
-			if((s.pilhaNumeros.length - 1) == s.pilhaOperacoes.length){
+	
+		if( num != 0 && lastCharResultado != "." ){
+			if( s.pilhaNumeros.length == s.pilhaOperacoes.length ){
+				s.pilhaNumeros.push(num);
 				s.pilhaOperacoes.push(operador);
 				s.resultado = "0";
 				s.hasVirgula = false;
-				if(s.historyInfo == null){
-					s.historyInfo = "History: ";
-				}
-				s.historyInfo += " " + num.toString() + " " + operador;	
+				s.negativeSignalApplied = false;
+				s.historyInfo += " " + operador + " ";	
 			}else{
 				Alert.alert("Insira um número antes de adicionar uma nova operação");
-				s.pilhaNumeros.pop();
 			}
 		}else{
-			if(s.resultado.charAt(s.resultado.length - 1).localeCompare(".") == 0 ){
+			temp = s.resultado;
+			temp.substr(0, 3);
+			if( !s.negativeSignalApplied && temp == "(-)" ){
+				s.negativeSignalApplied = true;
+				s.hasNegativeSignal.push(false); //todo: review
+			}
+			if( lastCharResultado == "." ){
 				Alert.alert("O número não pode terminar com uma vírgula");
 			}else{
-				if( operador.localeCompare("-") == 0){
-					num = num * -1;
-					s.resultado = num.toString();
+				if( operador == "-" ){
+					if( indexNum > -1 ){
+						if( !s.hasNegativeSignal[indexNum] ){
+							s.resultado = "(-)" + s.resultado;
+							s.hasNegativeSignal.push(true);
+						}else{
+							Alert.alert("Sinal negativo já adicionado");
+						}
+					}else{
+						if( s.hasNegativeSignal.length > 0 ){
+							Alert.alert("Sinal negativo já adicionado"); //todo: review
+						}else{
+							s.resultado = "(-)" + s.resultado;
+							s.hasNegativeSignal.push(true);
+						}
+					}
 				}else{
 					Alert.alert("Insira um número antes de adicionar uma nova operação");
 				}
 			}
 		}
-
 		return s;
 	}
 
 	addNumber(numero,s){
-		if(parseFloat(s.resultado) == 0 && !s.hasVirgula){
-			s.resultado = numero;
+		let resultado = s.resultado;
+		let numAtualIsNegative = false;
+		let temp = s.resultado;
+
+		temp.substr(0,3);
+
+		if( s.historyInfo == null ){
+			s.historyInfo = "History: ";
+		}
+
+		s.historyInfo += numero;
+		
+		if( temp == "(-)" ){
+			numAtualIsNegative = true;
+		}
+
+		if( numAtualIsNegative ){
+			resultado.substr(3, resultado.length - 3);
+		}
+
+		if( parseFloat(resultado) == 0 && !s.hasVirgula ){
+			if( numAtualIsNegative ){
+				s.resultado = "(-)" + numero;
+			}else{
+				s.resultado = numero;
+			}
 		}else{
 			s.resultado += numero;	
 		}
-		
+
 		return s;
 	}
 
 	addVirgula(s){
 
-		if(!s.hasVirgula){
+		if( !s.hasVirgula ){
 			s.resultado += ".";
+			s.historyInfo += ".";
 			s.hasVirgula = true;
 		}else{
 			Alert.alert("O número só pode ter uma vírgula");
@@ -225,26 +313,18 @@ export default class ProjetoFinal extends Component {
 	}
 
 	getResult(s){
-		let lastNum;
+		let history;
+		let data;
+		let dataFormatted;
 
-		if( s.resultado.charAt(s.resultado.length - 1).localeCompare(".") != 0 ){
-			lastNum = parseFloat(s.resultado);
-			s.pilhaNumeros.push(lastNum);
-			if(s.pilhaOperacoes.length == s.pilhaNumeros.length){
-				s.pilhaOperacoes.pop();
-			}
+		if( s.resultado.charAt(s.resultado.length - 1) != "." ){
+			s.pilhaNumeros.push(parseFloat(s.resultado));
 			s.resultado = this.resolvePilha(s.pilhaOperacoes,s.pilhaNumeros);
-			if( parseFloat(s.resultado) - parseInt(s.resultado) != 0 ){
-				s.hasVirgula = true;
-			}else{
-				s.hasVirgula = false;
-			}
-			s.historyApp.push(s.historyInfo);
-			s.historyInfo = null;
-			s.historyPilhaOperacoes += s.pilhaOperacoes;
-			s.historyPilhaNumeros += s.pilhaNumeros;
-			s.pilhaNumeros = [];
-			s.pilhaOperacoes = [];
+			data = new Date();
+			dataFormatted = data.getDate() + " - " + (data.getMonth() + 1) + " - " + data.getFullYear();
+			history = new History(s.pilhaNumeros,s.pilhaOperacoes,s.resultado,dataFormatted,"Gabriel Plata"); //TODO - task: 4 
+			s.historyApp.push(history);
+			s = this.restartState(s,false);
 		}else{
 			Alert.alert("O número não pode terminar com vírgula");
 		}
@@ -301,32 +381,32 @@ export default class ProjetoFinal extends Component {
 		    		<Text style={styles.resultado}>{this.state.resultado}</Text>
 		    	</View>
 		    	<View style={styles.linha}>
-		    		<Botao label="AC" onPress={ () => {this.state.teste="AC"; this.puloDoGato();} } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")} flex="2"/>
-		    		<Botao label="%" onPress={ () => {this.state.teste="%"; this.puloDoGato();} } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")}/>
-		    		<Botao label="÷" onPress={ () => {this.state.teste="÷"; this.puloDoGato();} } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")}/>
+		    		<Botao label="AC" onPress={ () => this.puloDoGato("AC") } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")} flex="2"/>
+		    		<Botao label="%" onPress={ () => this.puloDoGato("%") } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")}/>
+		    		<Botao label="÷" onPress={ () => this.puloDoGato("÷") } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")}/>
 		    	</View>
 		    	<View style={styles.linha}>
-		    		<Botao label="9" onPress={ () => {this.state.teste="9"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
-		    		<Botao label="8" onPress={ () => {this.state.teste="8"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
-		    		<Botao label="7" onPress={ () => {this.state.teste="7"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
-		    		<Botao label="*" onPress={ () => {this.state.teste="*"; this.puloDoGato();} } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")}/>
+		    		<Botao label="9" onPress={ () => this.puloDoGato("9") } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
+		    		<Botao label="8" onPress={ () => this.puloDoGato("8") } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
+		    		<Botao label="7" onPress={ () => this.puloDoGato("7") } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
+		    		<Botao label="*" onPress={ () => this.puloDoGato("*") } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")}/>
 		    	</View>
 		    	<View style={styles.linha}>
-		    		<Botao label="6" onPress={ () => {this.state.teste="6"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
-		    		<Botao label="5" onPress={ () => {this.state.teste="5"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
-		    		<Botao label="4" onPress={ () => {this.state.teste="4"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
-		    		<Botao label="-" onPress={ () => {this.state.teste="-"; this.puloDoGato();} } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")}/>
+		    		<Botao label="6" onPress={ () => this.puloDoGato("6") } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
+		    		<Botao label="5" onPress={ () => this.puloDoGato("5") } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
+		    		<Botao label="4" onPress={ () => this.puloDoGato("4") } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
+		    		<Botao label="-" onPress={ () => this.puloDoGato("-") } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")}/>
 		    	</View>
 		    	<View style={styles.linha}>
-		    		<Botao label="3" onPress={ () => {this.state.teste="3"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
-		    		<Botao label="2" onPress={ () => {this.state.teste="2"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
-		    		<Botao label="1" onPress={ () => {this.state.teste="1"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
-		    		<Botao label="+" onPress={ () => {this.state.teste="+"; this.puloDoGato();} } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")}/>
+		    		<Botao label="3" onPress={ () => this.puloDoGato("3") } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
+		    		<Botao label="2" onPress={ () => this.puloDoGato("2") } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
+		    		<Botao label="1" onPress={ () => this.puloDoGato("1") } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
+		    		<Botao label="+" onPress={ () => this.puloDoGato("+") } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")}/>
 		    	</View>
 		    	<View style={styles.linha}>
-		    		<Botao label="0" onPress={ () => {this.state.teste="0"; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")} flex="2"/>
-		    		<Botao label="." onPress={ () => {this.state.teste="."; this.puloDoGato();} } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
-		    		<Botao label="=" onPress={ () => {this.state.teste="="; this.puloDoGato();} } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")}/>
+		    		<Botao label="0" onPress={ () => this.puloDoGato("0") } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")} flex="2"/>
+		    		<Botao label="." onPress={ () => this.puloDoGato(".") } textColor={this.colors("textBotaoNum")} bgColor={this.colors("bgBotaoNumero")} borderColor={this.colors("borderNumColor")}/>
+		    		<Botao label="=" onPress={ () => this.puloDoGato("=") } textColor={this.colors("textBotaoOp")} bgColor={this.colors("bgBotaoOperador")} borderColor={this.colors("borderOpColor")}/>
 		    	</View>
 		    	<View style={styles.history}>
 		    		<Text style={styles.historyInfo}>{this.state.historyInfo}</Text>
